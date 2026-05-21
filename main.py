@@ -1,18 +1,18 @@
 from kivymd.app import MDApp
-from kivymd.uix.screen import Screen
-from kivymd.uix.screenmanager import ScreenManager
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.button import MDRaisedButton
-from kivymd.uix.label import MDLabel
-from kivymd.uix.progressbar import MDProgressBar
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.screenmanager import MDScreenManager
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.toolbar import MDTopAppBar
+from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.card import MDCard
+from kivymd.uix.toolbar import MDTopAppBar
 from kivy.clock import Clock
 import sqlite3
 from datetime import datetime
 
-# ================== DATABASE ==================
+# ================= DATABASE =================
 
 class Database:
     def __init__(self):
@@ -33,313 +33,381 @@ class Database:
 
     def save(self, user, score):
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
-        self.cursor.execute("INSERT INTO notas VALUES(NULL,?,?,?)", (user,score,fecha))
+        self.cursor.execute(
+            "INSERT INTO notas VALUES(NULL,?,?,?)",
+            (user, score, fecha)
+        )
         self.conn.commit()
 
-    def get_last(self, user):
-        self.cursor.execute("SELECT calificacion FROM notas WHERE usuario=?", (user,))
-        data = self.cursor.fetchall()
-        return data[-1][0] if data else 0
-
-# ================== DATA ==================
-
-INTRO = [
-    "Python es un lenguaje de programación interpretado, creado para ser fácil de leer y escribir.",
-    "Se utiliza en inteligencia artificial, desarrollo web, análisis de datos y automatización.",
-    "Su sintaxis es simple, lo que lo hace ideal para principiantes.",
-    "En este curso aprenderás desde lo básico hasta lógica aplicada.",
-    "Al finalizar deberás aprobar un examen para obtener tu certificación."
-]
+# ================= DATOS =================
 
 COURSE = [
-    ("Variables","Las variables almacenan información como números, texto o valores booleanos."),
-    ("Condicionales","Permiten tomar decisiones usando if, elif y else."),
-    ("Bucles","Permiten repetir acciones automáticamente."),
-    ("Funciones","Bloques de código reutilizables."),
-    ("Listas","Estructuras que almacenan múltiples valores.")
+    ("Variables", "Las variables almacenan información."),
+    ("Condicionales", "Permiten tomar decisiones."),
+    ("Bucles", "Repiten acciones automáticamente."),
+    ("Funciones", "Código reutilizable."),
+    ("Listas", "Guardan múltiples valores.")
 ]
 
 QUIZ = [
-    ("¿Qué es Python principalmente?",["Un lenguaje de programación","Un sistema operativo","Un juego"],0),
-    ("¿Para qué sirven las variables?",["Guardar datos","Mostrar errores","Crear pantallas"],0),
-    ("¿Qué hace un 'if'?",["Toma decisiones","Repite código","Guarda archivos"],0),
-    ("¿Qué es un bucle?",["Repetición de código","Un error","Un tipo de dato"],0),
-    ("¿Qué es una función?",["Bloque reutilizable","Variable especial","Pantalla"],0),
-    ("¿Qué tipo de lenguaje es Python?",["Interpretado","Compilado","Binario"],0),
-    ("¿Qué estructura guarda varios valores?",["Lista","Variable simple","Clase"],0),
-    ("¿Qué hace 'print'?",["Muestra información","Borra datos","Crea funciones"],0),
-    ("¿Qué palabra clave crea funciones?",["def","func","create"],0),
-    ("¿Python es fácil de aprender?",["Sí","No","Imposible"],0),
+    ("¿Qué es Python?", ["Lenguaje", "Juego", "Sistema"], 0),
+    ("¿Qué hace un if?", ["Decisión", "Repetición", "Error"], 0),
+    ("¿Qué es una lista?", ["Colección", "Pantalla", "Función"], 0),
 ]
 
-# ================== APP STATE ==================
+# ================= ESTADO =================
 
 class State:
     user = ""
 
-# ================== SCREENS ==================
+# ================= PANTALLA LOGIN =================
 
-class Inicio(Screen):
-    def __init__(self, app, **k):
-        super().__init__(**k)
+class Inicio(MDScreen):
+
+    def __init__(self, app, **kwargs):
+        super().__init__(**kwargs)
         self.app = app
 
-        layout = MDBoxLayout(orientation="vertical", padding=30, spacing=20)
+        main = MDBoxLayout(
+            orientation="vertical",
+            padding=30,
+            spacing=25
+        )
 
-        layout.add_widget(MDTopAppBar(title="Curso Python Pro"))
+        toolbar = MDTopAppBar(
+            title="Hiub Learning",
+            elevation=4
+        )
 
-        self.input = MDTextField(hint_text="Escribe tu nombre")
+        main.add_widget(toolbar)
 
-        layout.add_widget(self.input)
+        card = MDCard(
+            orientation="vertical",
+            padding=30,
+            spacing=20,
+            radius=[20],
+            elevation=6,
+            size_hint=(0.9, None),
+            height=350,
+            pos_hint={"center_x": 0.5, "center_y": 0.5}
+        )
 
-        layout.add_widget(MDRaisedButton(
-            text="Iniciar",
+        title = MDLabel(
+            text="Bienvenido",
+            halign="center",
+            font_style="H4"
+        )
+
+        subtitle = MDLabel(
+            text="Curso Profesional de Python",
+            halign="center",
+            theme_text_color="Secondary"
+        )
+
+        self.input = MDTextField(
+            hint_text="Ingresa tu nombre",
+            helper_text="Escribe tu usuario",
+            helper_text_mode="on_focus",
+            icon_right="account"
+        )
+
+        btn = MDRaisedButton(
+            text="INGRESAR",
+            pos_hint={"center_x": 0.5},
             on_release=self.enter
-        ))
+        )
 
-        self.add_widget(layout)
+        card.add_widget(title)
+        card.add_widget(subtitle)
+        card.add_widget(self.input)
+        card.add_widget(btn)
+
+        main.add_widget(card)
+
+        self.add_widget(main)
 
     def enter(self, *args):
         if self.input.text.strip():
             State.user = self.input.text
-            self.manager.current = "intro"
-
-# ------------------
-
-class Intro(Screen):
-    def __init__(self, app, **k):
-        super().__init__(**k)
-        self.app = app
-        self.i = 0
-
-        layout = MDBoxLayout(orientation="vertical", padding=30, spacing=20)
-
-        self.label = MDLabel(
-            halign="center",
-            font_style="H6"
-        )
-
-        layout.add_widget(self.label)
-
-        self.add_widget(layout)
-
-        Clock.schedule_once(self.animate, 1)
-
-    def animate(self, dt):
-        self.show()
-
-    def show(self):
-        if self.i < len(INTRO):
-            self.label.text = INTRO[self.i]
-            self.i += 1
-            Clock.schedule_once(lambda dt: self.show(), 2)
-        else:
             self.manager.current = "menu"
 
-# ------------------
+# ================= MENU =================
 
-class Menu(Screen):
-    def __init__(self, app, **k):
-        super().__init__(**k)
-        self.app = app
+class Menu(MDScreen):
 
-        layout = MDBoxLayout(orientation="vertical", padding=20, spacing=20)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        self.info = MDLabel(halign="center")
-        layout.add_widget(self.info)
-
-        self.progress = MDProgressBar(value=0)
-        layout.add_widget(self.progress)
-
-        layout.add_widget(MDRaisedButton(text="Iniciar Curso", on_release=self.start))
-
-        self.add_widget(layout)
-
-    def on_pre_enter(self):
-        self.info.text = f"👤 {State.user}"
-
-    def start(self, *args):
-        t = self.manager.get_screen("tema")
-        t.reset()
-        self.manager.current = "tema"
-
-# ------------------
-
-class Tema(Screen):
-    def __init__(self, **k):
-        super().__init__(**k)
-        self.i = 0
-
-        self.label = MDLabel(halign="center")
-
-        self.add_widget(self.label)
-
-        self.add_widget(MDRaisedButton(text="Siguiente", on_release=self.next))
-
-    def reset(self):
-        self.i = 0
-        self.show()
-
-    def show(self):
-        t = COURSE[self.i]
-        self.label.text = f"{t[0]}\n\n{t[1]}"
-
-    def next(self, *args):
-        self.i += 1
-        if self.i < len(COURSE):
-            self.show()
-        else:
-            q = self.manager.get_screen("quiz")
-            q.reset()
-            self.manager.current = "quiz"
-
-# ------------------
-
-class Quiz(Screen):
-    def __init__(self, app, **k):
-        super().__init__(**k)
-        self.app = app
-
-        self.i = 0
-        self.score = 0
-
-        # CONTENEDOR PRINCIPAL
-        layout = MDBoxLayout(
+        main = MDBoxLayout(
             orientation="vertical",
-            padding=30,
+            padding=20,
             spacing=20
         )
 
-        # TITULO
-        layout.add_widget(MDTopAppBar(title="Examen Final"))
+        main.add_widget(MDTopAppBar(
+            title="Panel Principal"
+        ))
 
-        # PREGUNTA (CENTRADA)
-        self.label = MDLabel(
+        self.user_label = MDLabel(
             halign="center",
-            theme_text_color="Primary",
-            font_style="H6",
-            size_hint_y=None,
-            height=100
+            font_style="H5"
         )
-        layout.add_widget(self.label)
 
-        # CONTENEDOR DE RESPUESTAS (CENTRADO)
-        self.answers_box = MDBoxLayout(
+        self.progress = MDProgressBar(
+            value=0
+        )
+
+        card = MDCard(
             orientation="vertical",
-            spacing=15,
-            size_hint=(1, None),
-            height=250,
-            padding=10
+            padding=20,
+            spacing=20,
+            radius=[20],
+            elevation=5
         )
 
-        self.buttons = []
-        for _ in range(3):
-            btn = MDRaisedButton(
-                pos_hint={"center_x": 0.5},
-                size_hint=(0.8, None),
-                height=50,
-                on_release=self.answer
-            )
-            self.buttons.append(btn)
-            self.answers_box.add_widget(btn)
+        card.add_widget(self.user_label)
+        card.add_widget(self.progress)
 
-        layout.add_widget(self.answers_box)
+        btn = MDRaisedButton(
+            text="COMENZAR CURSO",
+            pos_hint={"center_x": 0.5},
+            on_release=self.start_course
+        )
 
-        self.add_widget(layout)
+        card.add_widget(btn)
+
+        main.add_widget(card)
+
+        self.add_widget(main)
+
+    def on_pre_enter(self):
+        self.user_label.text = f"👤 Bienvenido {State.user}"
+
+    def start_course(self, *args):
+        tema = self.manager.get_screen("tema")
+        tema.reset()
+        self.manager.current = "tema"
+
+# ================= TEMAS =================
+
+class Tema(MDScreen):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.index = 0
+
+        self.layout = MDBoxLayout(
+            orientation="vertical",
+            padding=25,
+            spacing=20
+        )
+
+        self.layout.add_widget(MDTopAppBar(
+            title="Curso Python"
+        ))
+
+        self.card = MDCard(
+            orientation="vertical",
+            padding=30,
+            radius=[20],
+            elevation=5
+        )
+
+        self.title = MDLabel(
+            halign="center",
+            font_style="H4"
+        )
+
+        self.content = MDLabel(
+            halign="center"
+        )
+
+        self.btn = MDRaisedButton(
+            text="SIGUIENTE",
+            pos_hint={"center_x": 0.5},
+            on_release=self.next_topic
+        )
+
+        self.card.add_widget(self.title)
+        self.card.add_widget(self.content)
+        self.card.add_widget(self.btn)
+
+        self.layout.add_widget(self.card)
+
+        self.add_widget(self.layout)
 
     def reset(self):
-        self.i = 0
+        self.index = 0
+        self.show_topic()
+
+    def show_topic(self):
+        topic = COURSE[self.index]
+        self.title.text = topic[0]
+        self.content.text = topic[1]
+
+    def next_topic(self, *args):
+        self.index += 1
+
+        if self.index < len(COURSE):
+            self.show_topic()
+        else:
+            quiz = self.manager.get_screen("quiz")
+            quiz.reset()
+            self.manager.current = "quiz"
+
+# ================= QUIZ =================
+
+class Quiz(MDScreen):
+
+    def __init__(self, app, **kwargs):
+        super().__init__(**kwargs)
+
+        self.app = app
+        self.index = 0
         self.score = 0
-        self.show()
 
-    def show(self):
-        q = QUIZ[self.i]
-        self.label.text = q[0]
+        main = MDBoxLayout(
+            orientation="vertical",
+            padding=20,
+            spacing=20
+        )
 
-        for j, op in enumerate(q[1]):
-            self.buttons[j].text = op
+        main.add_widget(MDTopAppBar(
+            title="Examen Final"
+        ))
+
+        self.question = MDLabel(
+            halign="center",
+            font_style="H5"
+        )
+
+        main.add_widget(self.question)
+
+        self.buttons = []
+
+        for i in range(3):
+            btn = MDRaisedButton(
+                text="",
+                pos_hint={"center_x": 0.5},
+                on_release=self.answer
+            )
+
+            self.buttons.append(btn)
+            main.add_widget(btn)
+
+        self.add_widget(main)
+
+    def reset(self):
+        self.index = 0
+        self.score = 0
+        self.show_question()
+
+    def show_question(self):
+        q = QUIZ[self.index]
+
+        self.question.text = q[0]
+
+        for i, option in enumerate(q[1]):
+            self.buttons[i].text = option
 
     def answer(self, btn):
-        q = QUIZ[self.i]
+
+        q = QUIZ[self.index]
 
         if btn.text == q[1][q[2]]:
             self.score += 1
-            self.label.text = "✔ Correcto"
-        else:
-            self.label.text = "✖ Incorrecto"
 
-        self.i += 1
-        Clock.schedule_once(lambda dt: self.next(), 0.6)
+        self.index += 1
 
-    def next(self):
-        if self.i < len(QUIZ):
-            self.show()
+        if self.index < len(QUIZ):
+            self.show_question()
         else:
             self.finish()
 
     def finish(self):
+
         self.app.db.save(State.user, self.score)
 
-        if self.score >= 8:
-            self.label.text = f"🎉 Aprobado {self.score}/10"
-            Clock.schedule_once(lambda dt: setattr(self.manager,"current","certificado"),2)
-        else:
-            self.label.text = f"❌ {self.score}/10"
+        result = self.manager.get_screen("resultado")
+        result.show_result(self.score)
 
-# ------------------
+        self.manager.current = "resultado"
 
-class Certificado(Screen):
-    def __init__(self, app, **k):
-        super().__init__(**k)
-        self.app = app
+# ================= RESULTADO =================
+
+class Resultado(MDScreen):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        main = MDBoxLayout(
+            orientation="vertical",
+            padding=30,
+            spacing=30
+        )
+
+        main.add_widget(MDTopAppBar(
+            title="Resultado"
+        ))
 
         self.label = MDLabel(
             halign="center",
-            font_style="H6"
+            font_style="H4"
         )
 
-        self.add_widget(self.label)
+        btn = MDRaisedButton(
+            text="VOLVER AL MENU",
+            pos_hint={"center_x": 0.5},
+            on_release=self.back
+        )
 
-        self.add_widget(MDRaisedButton(
-            text="Volver al inicio",
-            on_release=lambda x: setattr(self.manager,"current","menu")
-        ))
+        main.add_widget(self.label)
+        main.add_widget(btn)
 
-    def on_pre_enter(self):
-        score = self.app.db.get_last(State.user)
+        self.add_widget(main)
 
-        self.label.text = f"""
-🎓 CERTIFICADO OFICIAL 🎓
+    def show_result(self, score):
 
-Se certifica que:
+        if score >= 2:
+            self.label.text = f"""
+🎓 FELICIDADES
 
 {State.user}
 
-Ha completado el curso de Python
+Aprobaste el curso
 
-Calificación final: {score}/10
+Puntuación: {score}/3
+"""
+        else:
+            self.label.text = f"""
+❌ REPROBADO
 
-Estado: APROBADO ✔
+Puntuación: {score}/3
+"""
 
-_________________________
-Firma del sistema educativo
-        """
+    def back(self, *args):
+        self.manager.current = "menu"
 
-# ================== APP ==================
+# ================= APP =================
 
-class ProApp(MDApp):
+class HiubApp(MDApp):
+
     def build(self):
+
+        self.theme_cls.primary_palette = "Blue"
+        self.theme_cls.theme_style = "Light"
+
         self.db = Database()
 
-        sm = ScreenManager()
+        sm = MDScreenManager()
 
         sm.add_widget(Inicio(self, name="inicio"))
-        sm.add_widget(Intro(self, name="intro"))
-        sm.add_widget(Menu(self, name="menu"))
+        sm.add_widget(Menu(name="menu"))
         sm.add_widget(Tema(name="tema"))
         sm.add_widget(Quiz(self, name="quiz"))
-        sm.add_widget(Certificado(self, name="certificado"))
+        sm.add_widget(Resultado(name="resultado"))
 
         return sm
 
-ProApp().run()
+HiubApp().run()
